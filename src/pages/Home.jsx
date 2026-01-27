@@ -1,8 +1,10 @@
 import Hero from '../components/Hero';
 import ServiceCard from '../components/ServiceCard';
 import { Link } from 'react-router-dom';
+import homeIntroImg from '../assets/images/home-intro.png';
 
 const Home = () => {
+    // ... stats and featuredCauses ...
     const stats = [
         { label: 'Total Campaigns', value: '0' },
         { label: 'Total Fund Raised', value: '0M' },
@@ -46,7 +48,7 @@ const Home = () => {
                 <div className="container grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
                         <img
-                            src="https://images.unsplash.com/photo-1509059852496-f3822ae048ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                            src={homeIntroImg}
                             alt="Hope"
                             style={{ borderRadius: 'var(--radius-lg)', width: '100%', boxShadow: 'var(--shadow-lg)' }}
                         />
@@ -54,7 +56,7 @@ const Home = () => {
                     <div>
                         <span style={{ color: 'var(--primary)', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Welcome To RefugeeHelp</span>
                         <h2 style={{ fontSize: '2.5rem', fontWeight: 'bold', lineHeight: 1.2, marginBottom: '1.5rem' }}>
-                            You&apos;re the Hope of Others.
+                            Restoring Hope, One Life at a Time.
                         </h2>
                         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
                             We are dedicated to providing essential support to those who have lost everything.

@@ -1,6 +1,23 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+// Import images
+import hero1 from '../assets/images/hero-1.png';
+import hero2 from '../assets/images/hero-2.png';
+import hero3 from '../assets/images/hero-3.png';
+
 const Hero = () => {
+    const images = [hero1, hero2, hero3];
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+        }, 5000); // Change every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [images.length]);
+
     return (
         <section style={{
             position: 'relative',
@@ -21,18 +38,25 @@ const Hero = () => {
                 zIndex: 1
             }}></div>
 
-            {/* Background Image (Placeholder URL - using a reliable Unsplash ID for refugees/charity) */}
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundImage: 'url("https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80")',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                zIndex: 0
-            }}></div>
+            {/* Slideshow Backgrounds */}
+            {images.map((img, index) => (
+                <div
+                    key={index}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        backgroundImage: `url(${img})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        zIndex: 0,
+                        opacity: index === currentImageIndex ? 1 : 0,
+                        transition: 'opacity 1s ease-in-out'
+                    }}
+                />
+            ))}
 
             <div className="container" style={{ position: 'relative', zIndex: 2 }}>
                 <div style={{ maxWidth: '600px' }}>
@@ -51,7 +75,7 @@ const Hero = () => {
                         lineHeight: 1.2,
                         marginBottom: '2rem'
                     }}>
-                        Give The Child The Gift Of Education.
+                        Restoring Dignity, Rebuilding Lives.
                     </h1>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
@@ -67,6 +91,32 @@ const Hero = () => {
                         </Link>
                     </div>
                 </div>
+            </div>
+
+            {/* Slide Indicators */}
+            <div style={{
+                position: 'absolute',
+                bottom: '2rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 2,
+                display: 'flex',
+                gap: '0.5rem'
+            }}>
+                {images.map((_, index) => (
+                    <div
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: index === currentImageIndex ? 'var(--primary)' : 'rgba(255, 255, 255, 0.5)',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.3s'
+                        }}
+                    />
+                ))}
             </div>
         </section>
     );

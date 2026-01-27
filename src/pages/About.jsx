@@ -1,3 +1,5 @@
+import aboutImpactImg from '../assets/images/about-impact.png';
+
 const About = () => {
     return (
         <>
@@ -56,7 +58,7 @@ const About = () => {
                     <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
                         <div>
                             <img
-                                src="https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                                src={aboutImpactImg}
                                 alt="Impact"
                                 style={{ width: '100%', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}
                             />

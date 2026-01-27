@@ -24,7 +24,7 @@ const Navbar = () => {
             <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '4rem' }}>
                 {/* Logo */}
                 <Link to="/" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>RefugeeHelp</span>
+                    <span>Adukt Social Services</span>
                 </Link>
 
                 {/* Desktop Menu */}

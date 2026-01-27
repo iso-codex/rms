@@ -4,7 +4,7 @@ const Footer = () => {
             <div className="container">
                 <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '3rem' }}>
                     <div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--primary)' }}>RefugeeHelp</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--primary)' }}>Adukt Social Services</h3>
                         <p style={{ color: '#9ca3af', lineHeight: 1.6 }}>
                             Empowering displaced communities with dignity, hope, and direct support.
                             Connecting those in need with those who can help.
@@ -32,7 +32,7 @@ const Footer = () => {
                 </div>
 
                 <div style={{ borderTop: '1px solid #374151', marginTop: '3rem', paddingTop: '2rem', textAlign: 'center', color: '#9ca3af' }}>
-                    © {new Date().getFullYear()} Refugee Host & Support Platform. All rights reserved.
+                    © {new Date().getFullYear()} Adukt Social Services. All rights reserved.
                 </div>
             </div>
         </footer>

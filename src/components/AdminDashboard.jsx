@@ -63,6 +63,7 @@ const StatusBadge = ({ status }) => {
 
 const AdminDashboard = () => {
     const { user, signOut } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('requests'); // 'requests', 'users', 'donations', 'services', 'settings'
     const [stats, setStats] = useState({ refugees: 0, requests: 0, pending: 0, donations: '$0' });
 
@@ -75,68 +76,93 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     // --- Data Fetching ---
+    // --- Data Fetching ---
     const fetchData = async () => {
         setLoading(true);
+        console.log("Fetching admin data...");
         try {
-            // 1. Requests
-            const { data: reqData, error: reqError } = await supabase
-                .from('requests')
-                .select('*, profiles:user_id(full_name, nationality, gender)')
-                .order('created_at', { ascending: false });
-            if (reqError) throw reqError;
+            const [
+                refugeeCountResult,
+                requestCountResult,
+                pendingCountResult,
+                reqDataResult,
+                refDataResult,
+                donDataResult,
+                servDataResult
+            ] = await Promise.allSettled([
+                supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'refugee'),
+                supabase.from('requests').select('*', { count: 'exact', head: true }),
+                supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+                supabase.from('requests').select('*, profiles:user_id(full_name, nationality, gender)').order('created_at', { ascending: false }),
+                supabase.from('profiles').select('*').eq('role', 'refugee'),
+                supabase.from('donations').select('*').order('created_at', { ascending: false }),
+                supabase.from('services').select('*').order('created_at', { ascending: false })
+            ]);
+
+            // Helper to extract data or throw error if needed (or just log)
+            const getResult = (result, name) => {
+                if (result.status === 'rejected') {
+                    console.error(`Error fetching ${name}:`, result.reason);
+                    return { data: [], count: 0 };
+                }
+                if (result.value.error) {
+                    console.error(`Error fetching ${name}:`, result.value.error);
+                    return { data: [], count: 0 };
+                }
+                return result.value;
+            };
+
+            const refugeeCount = getResult(refugeeCountResult, 'refugeeCount').count;
+            const requestCount = getResult(requestCountResult, 'requestCount').count;
+            const pendingCount = getResult(pendingCountResult, 'pendingCount').count;
+
+            const reqData = getResult(reqDataResult, 'requests').data;
+            const refData = getResult(refDataResult, 'refugees').data;
+            const donData = getResult(donDataResult, 'donations').data;
+            const servData = getResult(servDataResult, 'services').data;
+
             setRequests(reqData || []);
-
-            // 2. Refugees
-            const { data: refData, error: refError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('role', 'refugee');
-            if (refError) throw refError;
             setRefugees(refData || []);
-
-            // 3. Donations
-            const { data: donData, error: donError } = await supabase
-                .from('donations')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (donError) throw donError;
             setDonations(donData || []);
-
-            // 4. Services
-            const { data: servData, error: servError } = await supabase
-                .from('services')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (servError) throw servError;
             setServices(servData || []);
 
             // Stats Calculation
             const totalDonations = (donData || []).reduce((sum, d) => sum + parseFloat(d.amount || 0), 0);
 
             setStats({
-                refugees: refData?.length || 0,
-                requests: reqData?.length || 0,
-                pending: (reqData || []).filter(r => r.status === 'pending').length,
+                refugees: refugeeCount || refData?.length || 0,
+                requests: requestCount || reqData?.length || 0,
+                pending: pendingCount || (reqData || []).filter(r => r.status === 'pending').length,
                 donations: `$${totalDonations.toLocaleString()}`
             });
 
         } catch (error) {
-            console.error('Error fetching admin data:', error);
+            console.error('Critical error fetching admin data:', error);
         } finally {
+            console.log("Fetch complete, stopping loading.");
             setLoading(false);
         }
     };
 
     useEffect(() => {
+        let mounted = true;
+
+        // Wrap logic to prevent state update on unmount
+        // But since we can't cancel supabase promises easily we just ignore result
         fetchData();
-    }, []);
+
+        return () => { mounted = false; };
+    }, []); // Removed dependency array triggering
 
     const updateStatus = async (id, newStatus) => {
         try {
-            await supabase.from('requests').update({ status: newStatus }).eq('id', id);
+            const { error } = await supabase.from('requests').update({ status: newStatus }).eq('id', id);
+            if (error) throw error;
+            // Optimistic update or shallow refetch could be better, but refetch is safer for now
             fetchData();
         } catch (error) {
             console.error('Error updating status:', error);
+            alert("Failed to update status");
         }
     };
 
@@ -378,7 +404,7 @@ const AdminDashboard = () => {
                         <div style={{ fontSize: '0.875rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>System Admin</div>
                         <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{user.email}</div>
                     </div>
-                    <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }} title="Sign Out">↪</button>
+                    <button onClick={async () => { await signOut(); navigate('/'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }} title="Sign Out">↪</button>
                 </div>
             </div>
 

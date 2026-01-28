@@ -1,9 +1,35 @@
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Hero from '../components/Hero';
 import ServiceCard from '../components/ServiceCard';
-import { Link } from 'react-router-dom';
 import homeIntroImg from '../assets/images/home-intro.png';
 
 const Home = () => {
+    const { user, profile } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (user && profile) {
+            switch (profile.role) {
+                case 'admin':
+                    navigate('/admin', { replace: true });
+                    break;
+                case 'caseworker':
+                    navigate('/caseworker', { replace: true });
+                    break;
+                case 'ngo':
+                    navigate('/ngo', { replace: true });
+                    break;
+                case 'refugee':
+                    navigate('/refugee', { replace: true });
+                    break;
+                default:
+                    navigate('/dashboard', { replace: true });
+            }
+        }
+    }, [user, profile, navigate]);
+
     // ... stats and featuredCauses ...
     const stats = [
         { label: 'Total Campaigns', value: '0' },

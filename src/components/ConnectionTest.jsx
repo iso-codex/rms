@@ -8,20 +8,50 @@ const ConnectionTest = () => {
     useEffect(() => {
         const checkConnection = async () => {
             try {
-                // Try a simple health check or public table query
-                // We'll query profiles count (HEAD request) or just check url
-                const { data, error, status } = await supabase.from('services').select('id', { count: 'exact', head: true });
+                // 1. Check Auth Connection (usually fast)
+                const { error: authError } = await supabase.auth.getSession();
+                if (authError) throw authError;
 
-                if (error) {
-                    setStatus('Error');
-                    setDetails(error.message || JSON.stringify(error));
-                } else {
-                    setStatus('Success');
-                    setDetails(`Connected! Status: ${status}`);
+                // 2. Check DB Connection with a timeout
+                // Using a simple query that should return quick results or error (but not hang)
+                // We use an AbortController to prevent hanging requests
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+                try {
+                    const { count, error, status } = await supabase
+                        .from('services')
+                        .select('*', { count: 'exact', head: true })
+                        .abortSignal(controller.signal);
+
+                    clearTimeout(timeoutId);
+
+                    if (error) {
+                        // If RLS denies, that's still a "Connection", just not "Permission"
+                        // But usually we want to know if we can reach DB
+                        if (error.code === 'PGRST301' || error.status === 401) {
+                            setStatus('Connected (Restricted)');
+                            setDetails('Database reachable but access restricted (RLS).');
+                        } else {
+                            setStatus('Error');
+                            setDetails(error.message);
+                        }
+                    } else {
+                        setStatus('Success');
+                        setDetails(`Connected! DB Status: ${status}, Service Count: ${count}`);
+                    }
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    if (fetchError.name === 'AbortError') {
+                        setStatus('Timeout');
+                        setDetails('Connection timed out after 5 seconds.');
+                    } else {
+                        throw fetchError;
+                    }
                 }
             } catch (err) {
-                setStatus('Exception');
-                setDetails(err.message);
+                setStatus('Error');
+                setDetails(err.message || 'Unknown error occurred');
             }
         };
 

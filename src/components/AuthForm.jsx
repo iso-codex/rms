@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const AuthForm = ({ type }) => {
     const { signIn, signUp } = useAuth();
@@ -27,12 +28,41 @@ const AuthForm = ({ type }) => {
 
         try {
             if (type === 'login') {
-                const { error } = await signIn({
+                const { data, error } = await signIn({
                     email: formData.email,
                     password: formData.password,
                 });
                 if (error) throw error;
-                navigate('/dashboard');
+
+                // Fetch profile to get role for redirection
+                if (data?.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', data.user.id)
+                        .single();
+
+                    if (profile) {
+                        switch (profile.role) {
+                            case 'admin':
+                                navigate('/admin');
+                                break;
+                            case 'caseworker':
+                                navigate('/caseworker');
+                                break;
+                            case 'ngo':
+                                navigate('/ngo');
+                                break;
+                            case 'refugee':
+                                navigate('/refugee');
+                                break;
+                            default:
+                                navigate('/dashboard');
+                        }
+                    } else {
+                        navigate('/dashboard');
+                    }
+                }
             } else {
                 const { error } = await signUp({
                     email: formData.email,
@@ -45,7 +75,7 @@ const AuthForm = ({ type }) => {
                     },
                 });
                 if (error) throw error;
-                alert('Registration successful! Please login.'); // Or auto-login if Supabase defaults allow
+                alert('Registration successful! Please login.');
                 navigate('/login');
             }
         } catch (err) {

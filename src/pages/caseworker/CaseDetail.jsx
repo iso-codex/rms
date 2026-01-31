@@ -5,17 +5,14 @@ import { useHouseholdStore } from '../../stores/householdStore';
 import { useCaseStore } from '../../stores/caseStore';
 import { useIIPStore } from '../../stores/iipStore';
 import { StatusBadge, Modal, AlertBanner, LoadingSpinner } from '../../components/common';
+import AddMemberModal from '../../components/caseworker/AddMemberModal';
 
 const CaseDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { currentHousehold, fetchHousehold, loading } = useHouseholdStore();
-    const { caseNotes, fetchCaseNotes, addCaseNote, referrals, fetchReferrals } = useCaseStore();
-    const { plans, fetchPlans } = useIIPStore();
-    const [activeTab, setActiveTab] = useState('overview');
-    const [showNoteModal, setShowNoteModal] = useState(false);
-    const [newNote, setNewNote] = useState({ content: '', category: 'general', is_sensitive: false });
+    const { currentHousehold, fetchHousehold, setHeadOfHousehold, loading, error } = useHouseholdStore();
+    // ... (keep other hooks)
 
     useEffect(() => {
         if (id) {
@@ -26,23 +23,48 @@ const CaseDetail = () => {
         }
     }, [id]);
 
-    const handleAddNote = async () => {
-        if (!newNote.content.trim()) return;
+    // ... (keep handlers)
 
-        await addCaseNote({
-            household_id: id,
-            caseworker_id: user.id,
-            ...newNote
-        });
-
-        setNewNote({ content: '', category: 'general', is_sensitive: false });
-        setShowNoteModal(false);
-    };
-
-    if (loading || !currentHousehold) {
+    if (loading) {
         return (
             <div style={{ padding: '4rem', display: 'flex', justifyContent: 'center' }}>
                 <LoadingSpinner text="Loading case details..." />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div style={{ padding: '2rem' }}>
+                <AlertBanner
+                    type="error"
+                    title="Error Loading Case"
+                    message={error}
+                />
+                <button
+                    onClick={() => navigate('/caseworker/cases')}
+                    style={{ marginTop: '1rem', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                    ← Back to Cases
+                </button>
+            </div>
+        );
+    }
+
+    if (!currentHousehold) {
+        return (
+            <div style={{ padding: '2rem' }}>
+                <AlertBanner
+                    type="warning"
+                    title="Case Not Found"
+                    message="The requested household specific details could not be found."
+                />
+                <button
+                    onClick={() => navigate('/caseworker/cases')}
+                    style={{ marginTop: '1rem', color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                    ← Back to Cases
+                </button>
             </div>
         );
     }
@@ -154,7 +176,16 @@ const CaseDetail = () => {
 
                 {activeTab === 'members' && (
                     <div>
-                        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: '#111827' }}>Household Members</h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>Household Members</h3>
+                            <button
+                                onClick={() => setShowAddMemberModal(true)}
+                                className="btn btn-primary"
+                                style={{ fontSize: '0.875rem' }}
+                            >
+                                + Add Member
+                            </button>
+                        </div>
                         {currentHousehold.members?.length > 0 ? (
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 {currentHousehold.members.map((member) => (
@@ -165,8 +196,19 @@ const CaseDetail = () => {
                                                 {member.gender} • {member.date_of_birth ? `DOB: ${new Date(member.date_of_birth).toLocaleDateString()}` : 'No DOB'} • {member.nationality || 'Unknown nationality'}
                                             </div>
                                         </div>
-                                        {member.id === currentHousehold.head_of_household_id && (
+                                        {member.id === currentHousehold.head_of_household_id ? (
                                             <StatusBadge status="Head" size="xs" />
+                                        ) : (
+                                            <button
+                                                onClick={async () => {
+                                                    if (window.confirm(`Set ${member.full_name} as Head of Household?`)) {
+                                                        await setHeadOfHousehold(id, member.id);
+                                                    }
+                                                }}
+                                                style={{ fontSize: '0.75rem', color: '#4f46e5', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                            >
+                                                Set as Head
+                                            </button>
                                         )}
                                     </div>
                                 ))}
@@ -327,6 +369,16 @@ const CaseDetail = () => {
                     </label>
                 </div>
             </Modal>
+
+            {/* Add Member Modal */}
+            <AddMemberModal
+                isOpen={showAddMemberModal}
+                onClose={() => setShowAddMemberModal(false)}
+                householdId={id}
+                onSuccess={() => {
+                    fetchHousehold(id);
+                }}
+            />
         </div>
     );
 };

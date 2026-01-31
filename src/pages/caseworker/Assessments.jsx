@@ -7,7 +7,7 @@ const Assessments = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const householdId = searchParams.get('household');
-    const { assessments, fetchAssessments, loading } = useCaseStore();
+    const { assessments, fetchAssessments, deleteAssessment, loading } = useCaseStore();
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -63,16 +63,31 @@ const Assessments = () => {
             accessor: 'id',
             width: '100px',
             render: (id) => (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/caseworker/assessments/${id}`);
-                    }}
-                    className="btn btn-outline"
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                >
-                    Edit
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/caseworker/assessments/${id}`);
+                        }}
+                        className="btn btn-outline"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                    >
+                        Edit
+                    </button>
+                    <button
+                        onClick={async (e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Are you sure you want to delete this assessment?')) {
+                                await deleteAssessment(id);
+                                // The store updates the state, so the list should refresh automatically
+                            }
+                        }}
+                        className="btn btn-outline"
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#ef4444', color: '#ef4444' }}
+                    >
+                        Delete
+                    </button>
+                </div>
             )
         }
     ];

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useHouseholdStore } from '../../stores/householdStore';
 import { DataTable, StatusBadge } from '../../components/common';
+import NewCaseModal from '../../components/caseworker/NewCaseModal';
 
 const CaseList = () => {
     const { user } = useAuth();
@@ -10,6 +11,7 @@ const CaseList = () => {
     const { households, fetchHouseholds, loading } = useHouseholdStore();
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
         fetchHouseholds(user.id);
@@ -95,6 +97,13 @@ const CaseList = () => {
                         Manage your assigned households
                     </p>
                 </div>
+                <button 
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                    + New Case
+                </button>
             </div>
 
             {/* Filters */}
@@ -152,6 +161,15 @@ const CaseList = () => {
                 loading={loading}
                 emptyMessage="No cases found"
                 onRowClick={(row) => navigate(`/caseworker/cases/${row.id}`)}
+            />
+
+            <NewCaseModal 
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={() => {
+                    fetchHouseholds(user.id);
+                    // Optionally navigate to the new case or show a toast
+                }}
             />
         </div>
     );

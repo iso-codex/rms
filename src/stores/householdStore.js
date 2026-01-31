@@ -107,9 +107,45 @@ export const useHouseholdStore = create((set, get) => ({
         }
     },
 
-    // Assign caseworker
     assignCaseworker: async (householdId, caseworkerId) => {
         return get().updateHousehold(householdId, { assigned_caseworker_id: caseworkerId });
+    },
+
+    // Add Member
+    addMember: async (memberData) => {
+        set({ loading: true, error: null });
+        try {
+            // 1. Create Profile
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .insert([{
+                    full_name: memberData.full_name,
+                    date_of_birth: memberData.date_of_birth,
+                    gender: memberData.gender,
+                    nationality: memberData.nationality,
+                    role: 'refugee', // Default role
+                    household_id: memberData.household_id
+                }])
+                .select()
+                .single();
+
+            if (profileError) throw profileError;
+
+            // 2. Refresh current household to show new member
+            await get().fetchHousehold(memberData.household_id);
+
+            set({ loading: false });
+            return profileData;
+        } catch (error) {
+            console.error('Error adding member:', error);
+            set({ error: error.message, loading: false });
+            return null;
+        }
+    },
+
+    // Set Head of Household
+    setHeadOfHousehold: async (householdId, memberId) => {
+        return get().updateHousehold(householdId, { head_of_household_id: memberId });
     },
 
     clearCurrentHousehold: () => set({ currentHousehold: null }),
